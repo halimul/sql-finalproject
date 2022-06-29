@@ -1,0 +1,146 @@
+--Eksplorasi Data Analisis menggunakan fungsi Join pada SQL dengan menggunakan tools PGAdmin14
+
+--List Setiap Tabel------------------------------------------------------------------------
+--Tabel order_details
+SELECT*FROM order_items LIMIT5;
+--Tabel users
+SELECT*FROM users LIMIT5;
+--Tabel orders
+SELECT*FROM orders LIMIT5;
+--Tabel products
+SELECT*FROM products LIMIT5;
+
+--Hitung jumlah Product id dari kolom product_id di tabel order_items
+select count(product_id)
+from order_items;
+
+--Cek Null Pada Tabel order_items kolom sale_price
+select*from order_items
+where sale price is null;
+
+--Analisa Dataset Sederhana
+
+--5 Pelanggan yang membeli dengan Total Harga Terbesar---------------------------
+SELECT
+  distinct user_id,
+   first_name as nama_pelanggan,
+   sum(sale_price)as total_Harga
+FROM
+  order_items a
+  JOIN users b ON a.user_id=b.id
+GROUP BY
+  user_id,first_name
+ORDER BY
+   total_Harga desc
+LIMIT 5
+
+--Top 5 Product ID dengan jumlah Stok Terbanyak
+SELECT
+  product_id,
+  inventory_item_id as Inventroy_item,
+  sum(num_of_item) as Banyak_item
+FROM
+  orders a
+  RIGHT JOIN order_items b ON a.order_id=b.order_id
+GROUP BY
+  product_id,
+  inventory_item_id
+HAVING
+  sum(num_of_item)>1
+ORDER BY sum(num_of_item) desc
+LIMIT 5 
+
+--Top 5 Product ID terlaris
+SELECT
+  product_id,
+   sum(num_of_item) as total_quantity,
+  sum(sale_price) as total_price
+FROM
+  orders
+  JOIN order_items USING(order_id)
+GROUP BY
+  product_id
+ORDER BY
+  total_quantity desc
+LIMIT 5
+
+--Top 5 Pembeli dengan transaksi Tertinggi
+SELECT
+   first_name as nama_pembeli,
+   count(1) as jumlah_transaksi,
+   sum(sale_price) as total_nilai_transaksi,
+   min(sale_price) as min_nilai_transaksi 
+FROM
+   order_items a JOIN users b ON a.user_id=b.id
+GROUP BY
+   user_id,
+   first_name
+HAVING count(1)>11 and min(sale_price)>20
+ORDER BY total_nilai_transaksi DESC
+LIMIT 5
+
+--5 Pembeli dengan TRANSAKSI TERTINGGI yang sebagai ciri-ciri dari Dropshipper
+SELECT
+   first_name as nama_pembeli,
+   count(1) as jumlah_transaksi,
+   postal_code as b,
+   count(distinct b) as distinct_kodepos,
+   sum(sale_price) as total_nilai_transaksi,               
+   avg(sale_price) as avg_nilal_transaksi
+FROM
+   order_items a INNER JOIN users b ON a.user_id=b.id
+GROUP BY
+   first_name,
+   postal_code
+HAVING
+   count(1)>=1 AND
+   count(1)=count(distinct b)
+ORDER BY
+   jumlah_transaksi DESC
+LIMIT 5
+
+--Menggabungkan Tabel order_items, orders, dan inventory_items
+select
+   order_items.order_id,
+   order_items.user_id,
+   order_items.product_id,
+   order_items.inventory_item_id,
+   order_items.status,
+   order_items.created_at,
+   order_items.shipped_at,
+   order_items.delivered_at,
+   order_items.returned_at,
+   order_items.sale_price,
+   orders.num_of_item,
+   inventory_items.cost
+from order_items
+inner join orders on order_items.id=orders.order_id
+inner join inventory_items on order_items.inventory_item_id=inventory_items.id
+order by order_id
+
+--Menggabungkan Tabel order_items, orders, dan inventory_items dengan status Completed
+select 
+	order_items.order_id,
+	order_items.user_id,	
+	order_items.product_id,	
+	order_items.inventory_item_id,
+	order_items.status,
+	order_items.created_at,
+	order_items.shipped_at,	
+	order_items.delivered_at,
+	order_items.returned_at,
+	order_items.sale_price,
+	orders.num_of_item,
+	inventory_items.cost
+-- 	order_items.sale_price,
+-- 	COALESCE(order_items.sale_price,0)COALESCE(orders.num_of_item,0) as Harga_Total,
+-- 	COALESCE(Harga_Total,0) - COALESCE(inventory_items.cost,0) as Profit
+from order_items
+inner join orders on order_items.id=orders.order_id
+inner join inventory_items on order_items.inventory_item_id= inventory_items.id
+where order_items.status = 'Complete'
+order by order_id
+
+
+
+
